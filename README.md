@@ -16,7 +16,7 @@ Credentials are shared privately. Product create, edit and delete are currently 
 - Shopping cart with stock-aware quantity controls.
 - Cash checkout with validation, VAT/shipping totals and orders saved by the backend.
 - Cookie-based admin sign-in, session restoration and protected routes.
-- Admin product search, filtering, sorting and pagination, with mobile cards and a desktop table.
+- Admin product search, filtering, sorting and pagination, with a compact mobile list, bottom-sheet actions and a desktop table.
 - Loading, error and retry states, plus unit and integration tests.
 
 **Demo scope:** No real payments are processed. The cart resets on page reload;

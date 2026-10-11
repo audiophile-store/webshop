@@ -37,3 +37,9 @@
     width: 100%;
   }
 }
+@media (max-width: 700px) {
+  .OrderSuccess-Title.MuiTypography-root {
+    font-size: 26px;
+    line-height: 1.3;
+  }
+}

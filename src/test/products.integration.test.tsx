@@ -164,27 +164,68 @@ describe('admin responsive products', () => {
     expect(screen.getByRole('button', { name: 'Stock' })).toBeInTheDocument();
   });
 
-  it('shows mobile cards with identity, type, price, stock and existing edit/delete dialogs', async () => {
+  it('shows compact mobile rows and bottom-sheet actions with existing edit/delete dialogs', async () => {
     mobileViewport();
     renderStorefront('/admin');
     const list = await screen.findByRole('list', { name: 'Products' });
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    const addButton = screen.getByRole('button', { name: 'Add product' });
+    expect(addButton).toHaveTextContent(/^Add$/);
+    fireEvent.click(addButton);
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Add Product');
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+    expect(await screen.findByRole('menuitem', { name: 'Sign Out' })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape', code: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
     const card = within(list).getByRole('heading', { name: headphones.shortName }).closest('li');
     if (!card) throw new Error('Product card is missing.');
     expect(within(card).getByText(headphones.id)).toBeInTheDocument();
     expect(within(card).getByText('Headphones')).toBeInTheDocument();
     expect(within(card).getByText(/123,45\s*\u20ac/)).toBeInTheDocument();
-    expect(within(card).getByText('2')).toBeInTheDocument();
+    expect(within(card).getByText('2 in stock')).toBeInTheDocument();
     expect(within(card).getByText('Low stock')).toBeInTheDocument();
-    fireEvent.click(within(card).getByRole('button', { name: `Edit ${headphones.shortName}` }));
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    const openActions = () =>
+      fireEvent.click(
+        within(card).getByRole('button', { name: `Actions for ${headphones.shortName}` })
+      );
+    expect(within(card).queryByRole('button', { name: /^Edit/ })).not.toBeInTheDocument();
+    openActions();
+    const sheet = await screen.findByRole('dialog', { name: headphones.shortName });
+    expect(within(sheet).getByRole('link', { name: 'View in store' })).toHaveAttribute(
+      'href',
+      `/article/${headphones.id}`
+    );
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Close product actions' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    openActions();
+    fireEvent.click(await screen.findByText('Edit product'));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: headphones.shortName })).not.toBeInTheDocument()
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    fireEvent.click(within(card).getByRole('button', { name: `Delete ${headphones.shortName}` }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent(headphones.shortName);
+    openActions();
+    fireEvent.click(
+      within(await screen.findByRole('dialog', { name: headphones.shortName })).getByText('Delete')
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: headphones.shortName })).not.toBeInTheDocument()
+    );
+    expect(screen.getByRole('dialog')).toHaveTextContent(headphones.shortName);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
+    openActions();
+    fireEvent.click(
+      within(await screen.findByRole('dialog', { name: headphones.shortName })).getByRole('link', {
+        name: 'View in store',
+      })
+    );
+    expect(await screen.findByRole('heading', { name: headphones.title })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(fetchMock.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true);
   });
 
@@ -207,12 +248,17 @@ describe('admin responsive products', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(7);
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
     expect(screen.getByText('Mobile product 8')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Sort by price' }));
+    const sortControl = screen.getByRole('combobox', { name: 'Sort products' });
+    fireEvent.change(sortControl, { target: { value: 'price-asc' } });
     expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 0');
-    fireEvent.click(screen.getByRole('button', { name: 'Sort by price, ascending' }));
+    fireEvent.change(sortControl, { target: { value: 'price-desc' } });
     expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 8');
-    fireEvent.click(screen.getByRole('button', { name: 'Sort by stock' }));
+    fireEvent.change(sortControl, { target: { value: 'stock-asc' } });
     expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 8');
+    fireEvent.change(sortControl, { target: { value: 'stock-desc' } });
+    expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 0');
+    fireEvent.change(sortControl, { target: { value: '' } });
+    expect(sortControl).toHaveValue('');
     fireEvent.click(
       within(screen.getByRole('group', { name: 'Filter by type' })).getByRole('button', {
         name: 'Speakers',

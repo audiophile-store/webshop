@@ -19,15 +19,22 @@ import {
   DialogActions,
   Button,
   useMediaQuery,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAppSelector } from '../../app/hooks';
 import ProductFormModal from './ProductFormModal';
 import { formatCurrency } from '../../utils/utils';
@@ -44,6 +51,17 @@ const TYPE_LABELS: Record<ProductType, string> = {
 const FILTERS: Array<ProductType | 'all'> = ['all', 'headphones', 'speakers', 'earphones'];
 const PAGE_SIZE = 7;
 const LOW_STOCK = 10;
+const SORT_OPTIONS: Array<{
+  value: string;
+  label: string;
+  key: SortKey;
+  direction: 'asc' | 'desc';
+}> = [
+  { value: 'price-asc', label: 'Price: low to high', key: 'price', direction: 'asc' },
+  { value: 'price-desc', label: 'Price: high to low', key: 'price', direction: 'desc' },
+  { value: 'stock-asc', label: 'Stock: low to high', key: 'stock', direction: 'asc' },
+  { value: 'stock-desc', label: 'Stock: high to low', key: 'stock', direction: 'desc' },
+];
 
 type SortKey = 'price' | 'stock';
 
@@ -57,6 +75,7 @@ export default function Admin() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [actionProduct, setActionProduct] = useState<Product | null>(null);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -146,13 +165,14 @@ export default function Admin() {
         </Box>
         <Button
           className="Admin-AddButton"
+          aria-label="Add product"
           startIcon={<AddIcon />}
           onClick={() => {
             setEditProduct(null);
             setModalOpen(true);
           }}
         >
-          Add product
+          {isMobile ? 'Add' : 'Add product'}
         </Button>
       </Box>
 
@@ -190,75 +210,77 @@ export default function Admin() {
         {isMobile ? (
           <Box className="Admin-MobileProducts">
             <Box className="Admin-MobileSort" role="group" aria-label="Sort products">
-              {(['price', 'stock'] as const).map((key) => (
-                <Button
-                  key={key}
-                  size="small"
-                  onClick={() => toggleSort(key)}
-                  endIcon={
-                    sort?.key === key ? (
-                      sort.direction === 'asc' ? (
-                        <ArrowUpwardIcon />
-                      ) : (
-                        <ArrowDownwardIcon />
-                      )
-                    ) : undefined
-                  }
-                  aria-label={`Sort by ${key}${sort?.key === key ? `, ${sort.direction === 'asc' ? 'ascending' : 'descending'}` : ''}`}
-                >
-                  {key === 'price' ? 'Price' : 'Stock'}
-                </Button>
-              ))}
+              <Typography component="label" htmlFor="admin-mobile-sort" variant="caption">
+                Sorted by
+              </Typography>
+              <select
+                id="admin-mobile-sort"
+                aria-label="Sort products"
+                value={sort ? `${sort.key}-${sort.direction}` : ''}
+                onChange={(event) => {
+                  const option = SORT_OPTIONS.find((item) => item.value === event.target.value);
+                  setSort(option ? { key: option.key, direction: option.direction } : null);
+                  setPage(0);
+                }}
+              >
+                <option value="">Default order</option>
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </Box>
-            <Box component="ul" className="Admin-Cards" aria-label="Products">
+            <Box component="ul" className="Admin-MobileList" aria-label="Products">
               {visible.map((product) => (
-                <Box component="li" key={product.id} className="Admin-Card">
-                  <Box className="Admin-ProductCell">
-                    <img
-                      src={getProductImage(product.images.cover)}
-                      alt=""
-                      className="Admin-ProductImage"
-                    />
-                    <Box className="Admin-ProductIdentity">
-                      <Typography component="h2" className="Admin-ProductName">
-                        {product.shortName}
-                      </Typography>
+                <Box component="li" key={product.id} className="Admin-MobileRow">
+                  <img
+                    src={getProductImage(product.images.cover)}
+                    alt=""
+                    className="Admin-ProductImage"
+                  />
+                  <Box className="Admin-ProductIdentity">
+                    <Typography component="h2" className="Admin-ProductName">
+                      {product.shortName}
+                    </Typography>
+                    <Box className="Admin-MobileMetadata">
                       <Typography variant="caption" className="Admin-ProductId">
                         {product.id}
                       </Typography>
+                      <Chip
+                        label={TYPE_LABELS[product.type]}
+                        size="small"
+                        className={`Admin-TypeChip Admin-TypeChip--${product.type}`}
+                      />
                     </Box>
-                  </Box>
-                  <Chip
-                    label={TYPE_LABELS[product.type]}
-                    size="small"
-                    className={`Admin-TypeChip Admin-TypeChip--${product.type}`}
-                  />
-                  <Box component="dl" className="Admin-CardDetails">
-                    <Box>
-                      <Typography component="dt" variant="caption">
-                        Price
+                    <Box className="Admin-MobileStock">
+                      <Typography
+                        variant="caption"
+                        className={product.inStock <= LOW_STOCK ? 'Admin-Stock--low' : ''}
+                      >
+                        {product.inStock} in stock
                       </Typography>
-                      <Typography component="dd" className="Admin-Price">
-                        {formatCurrency(product.price)}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography component="dt" variant="caption">
-                        Stock
-                      </Typography>
-                      <Box component="dd" className="Admin-StockCell">
-                        <Typography
-                          className={`Admin-Stock ${product.inStock <= LOW_STOCK ? 'Admin-Stock--low' : ''}`}
-                        >
-                          {product.inStock}
+                      {product.inStock <= LOW_STOCK && (
+                        <Typography variant="caption" className="Admin-Stock--low">
+                          Low stock
                         </Typography>
-                        {product.inStock <= LOW_STOCK && (
-                          <Chip label="Low stock" size="small" className="Admin-LowStock" />
-                        )}
-                      </Box>
+                      )}
                     </Box>
                   </Box>
-                  {renderActions(product)}
+                  <Typography
+                    className="Admin-Price"
+                    aria-label={`Price ${formatCurrency(product.price)}`}
+                  >
+                    {formatCurrency(product.price)}
+                  </Typography>
+                  <IconButton
+                    className="Admin-MoreButton"
+                    aria-label={`Actions for ${product.shortName}`}
+                    aria-haspopup="dialog"
+                    onClick={() => setActionProduct(product)}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
                 </Box>
               ))}
             </Box>
@@ -382,6 +404,79 @@ export default function Admin() {
           </Box>
         </Box>
       </Box>
+
+      <Drawer
+        anchor="bottom"
+        open={isMobile && actionProduct !== null}
+        onClose={() => setActionProduct(null)}
+        PaperProps={{
+          className: 'Admin-ActionSheet',
+          role: 'dialog',
+          'aria-modal': true,
+          'aria-labelledby': 'admin-actions-title',
+        }}
+      >
+        {actionProduct && (
+          <>
+            <Box className="Admin-SheetHandle" aria-hidden="true" />
+            <Box className="Admin-SheetHeader">
+              <img
+                className="Admin-ProductImage"
+                src={getProductImage(actionProduct.images.cover)}
+                alt=""
+              />
+              <Box className="Admin-ProductIdentity">
+                <Typography id="admin-actions-title" component="h2" className="Admin-ProductName">
+                  {actionProduct.shortName}
+                </Typography>
+                <Typography variant="caption" className="Admin-SheetSummary">
+                  {actionProduct.id} · {formatCurrency(actionProduct.price)} ·{' '}
+                  {actionProduct.inStock} in stock
+                </Typography>
+              </Box>
+              <IconButton aria-label="Close product actions" onClick={() => setActionProduct(null)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <List>
+              <ListItemButton
+                onClick={() => {
+                  setEditProduct(actionProduct);
+                  setActionProduct(null);
+                  setModalOpen(true);
+                }}
+              >
+                <ListItemIcon>
+                  <EditOutlinedIcon />
+                </ListItemIcon>
+                <ListItemText primary="Edit product" />
+              </ListItemButton>
+              <ListItemButton
+                component={Link}
+                to={`/article/${encodeURIComponent(actionProduct.id)}`}
+                onClick={() => setActionProduct(null)}
+              >
+                <ListItemIcon>
+                  <OpenInNewIcon />
+                </ListItemIcon>
+                <ListItemText primary="View in store" />
+              </ListItemButton>
+              <ListItemButton
+                className="Admin-DeleteBtn"
+                onClick={() => {
+                  setDeleteProduct(actionProduct);
+                  setActionProduct(null);
+                }}
+              >
+                <ListItemIcon className="Admin-DeleteBtn">
+                  <DeleteOutlineIcon />
+                </ListItemIcon>
+                <ListItemText primary="Delete" />
+              </ListItemButton>
+            </List>
+          </>
+        )}
+      </Drawer>
 
       <ProductFormModal
         open={modalOpen}
