@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  useMediaQuery,
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -25,6 +26,8 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { useAppSelector } from '../../app/hooks';
 import ProductFormModal from './ProductFormModal';
 import { formatCurrency } from '../../utils/utils';
@@ -45,6 +48,7 @@ const LOW_STOCK = 10;
 type SortKey = 'price' | 'stock';
 
 export default function Admin() {
+  const isMobile = useMediaQuery('(max-width: 700px)');
   const products = useAppSelector((state) => state.products.data);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<ProductType | 'all'>('all');
@@ -98,6 +102,30 @@ export default function Admin() {
     );
     setPage(0);
   };
+
+  const renderActions = (product: Product) => (
+    <Box className="Admin-Actions">
+      <IconButton
+        size="small"
+        className="Admin-EditBtn"
+        aria-label={`Edit ${product.shortName}`}
+        onClick={() => {
+          setEditProduct(product);
+          setModalOpen(true);
+        }}
+      >
+        <EditOutlinedIcon fontSize="small" />
+      </IconButton>
+      <IconButton
+        size="small"
+        className="Admin-DeleteBtn"
+        aria-label={`Delete ${product.shortName}`}
+        onClick={() => setDeleteProduct(product)}
+      >
+        <DeleteOutlineIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
 
   return (
     <Box className="Admin">
@@ -159,119 +187,178 @@ export default function Admin() {
           </Box>
         </Box>
 
-        <TableContainer className="Admin-TableContainer">
-          <Table>
-            <TableHead>
-              <TableRow className="Admin-TableHead">
-                <TableCell>Product</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell
-                  align="right"
-                  sortDirection={sort?.key === 'price' ? sort.direction : false}
+        {isMobile ? (
+          <Box className="Admin-MobileProducts">
+            <Box className="Admin-MobileSort" role="group" aria-label="Sort products">
+              {(['price', 'stock'] as const).map((key) => (
+                <Button
+                  key={key}
+                  size="small"
+                  onClick={() => toggleSort(key)}
+                  endIcon={
+                    sort?.key === key ? (
+                      sort.direction === 'asc' ? (
+                        <ArrowUpwardIcon />
+                      ) : (
+                        <ArrowDownwardIcon />
+                      )
+                    ) : undefined
+                  }
+                  aria-label={`Sort by ${key}${sort?.key === key ? `, ${sort.direction === 'asc' ? 'ascending' : 'descending'}` : ''}`}
                 >
-                  <TableSortLabel
-                    active={sort?.key === 'price'}
-                    direction={sort?.key === 'price' ? sort.direction : 'asc'}
-                    onClick={() => toggleSort('price')}
-                  >
-                    Price
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell
-                  align="right"
-                  sortDirection={sort?.key === 'stock' ? sort.direction : false}
-                >
-                  <TableSortLabel
-                    active={sort?.key === 'stock'}
-                    direction={sort?.key === 'stock' ? sort.direction : 'asc'}
-                    onClick={() => toggleSort('stock')}
-                  >
-                    Stock
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+                  {key === 'price' ? 'Price' : 'Stock'}
+                </Button>
+              ))}
+            </Box>
+            <Box component="ul" className="Admin-Cards" aria-label="Products">
               {visible.map((product) => (
-                <TableRow key={product.id} className="Admin-TableRow">
-                  <TableCell>
-                    <Box className="Admin-ProductCell">
-                      <img
-                        src={getProductImage(product.images.cover)}
-                        alt=""
-                        className="Admin-ProductImage"
-                      />
-                      <Box>
-                        <Typography variant="body2" className="Admin-ProductName">
-                          {product.shortName}
-                        </Typography>
-                        <Typography variant="caption" className="Admin-ProductId">
-                          {product.id}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={TYPE_LABELS[product.type]}
-                      size="small"
-                      className={`Admin-TypeChip Admin-TypeChip--${product.type}`}
+                <Box component="li" key={product.id} className="Admin-Card">
+                  <Box className="Admin-ProductCell">
+                    <img
+                      src={getProductImage(product.images.cover)}
+                      alt=""
+                      className="Admin-ProductImage"
                     />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="body2" className="Admin-Price">
-                      {formatCurrency(product.price)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box className="Admin-StockCell">
-                      {product.inStock <= LOW_STOCK && (
-                        <Chip label="Low stock" size="small" className="Admin-LowStock" />
-                      )}
-                      <Typography
-                        variant="body2"
-                        className={`Admin-Stock ${product.inStock <= LOW_STOCK ? 'Admin-Stock--low' : ''}`}
-                      >
-                        {product.inStock}
+                    <Box className="Admin-ProductIdentity">
+                      <Typography component="h2" className="Admin-ProductName">
+                        {product.shortName}
+                      </Typography>
+                      <Typography variant="caption" className="Admin-ProductId">
+                        {product.id}
                       </Typography>
                     </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box className="Admin-Actions">
-                      <IconButton
-                        size="small"
-                        className="Admin-EditBtn"
-                        aria-label={`Edit ${product.shortName}`}
-                        onClick={() => {
-                          setEditProduct(product);
-                          setModalOpen(true);
-                        }}
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        className="Admin-DeleteBtn"
-                        aria-label={`Delete ${product.shortName}`}
-                        onClick={() => setDeleteProduct(product)}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
+                  </Box>
+                  <Chip
+                    label={TYPE_LABELS[product.type]}
+                    size="small"
+                    className={`Admin-TypeChip Admin-TypeChip--${product.type}`}
+                  />
+                  <Box component="dl" className="Admin-CardDetails">
+                    <Box>
+                      <Typography component="dt" variant="caption">
+                        Price
+                      </Typography>
+                      <Typography component="dd" className="Admin-Price">
+                        {formatCurrency(product.price)}
+                      </Typography>
                     </Box>
-                  </TableCell>
-                </TableRow>
+                    <Box>
+                      <Typography component="dt" variant="caption">
+                        Stock
+                      </Typography>
+                      <Box component="dd" className="Admin-StockCell">
+                        <Typography
+                          className={`Admin-Stock ${product.inStock <= LOW_STOCK ? 'Admin-Stock--low' : ''}`}
+                        >
+                          {product.inStock}
+                        </Typography>
+                        {product.inStock <= LOW_STOCK && (
+                          <Chip label="Low stock" size="small" className="Admin-LowStock" />
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                  {renderActions(product)}
+                </Box>
               ))}
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" className="Admin-Empty">
-                    No products found
+            </Box>
+            {filtered.length === 0 && (
+              <Typography className="Admin-Empty">No products found</Typography>
+            )}
+          </Box>
+        ) : (
+          <TableContainer className="Admin-TableContainer">
+            <Table>
+              <TableHead>
+                <TableRow className="Admin-TableHead">
+                  <TableCell>Product</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell
+                    align="right"
+                    sortDirection={sort?.key === 'price' ? sort.direction : false}
+                  >
+                    <TableSortLabel
+                      active={sort?.key === 'price'}
+                      direction={sort?.key === 'price' ? sort.direction : 'asc'}
+                      onClick={() => toggleSort('price')}
+                    >
+                      Price
+                    </TableSortLabel>
                   </TableCell>
+                  <TableCell
+                    align="right"
+                    sortDirection={sort?.key === 'stock' ? sort.direction : false}
+                  >
+                    <TableSortLabel
+                      active={sort?.key === 'stock'}
+                      direction={sort?.key === 'stock' ? sort.direction : 'asc'}
+                      onClick={() => toggleSort('stock')}
+                    >
+                      Stock
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {visible.map((product) => (
+                  <TableRow key={product.id} className="Admin-TableRow">
+                    <TableCell>
+                      <Box className="Admin-ProductCell">
+                        <img
+                          src={getProductImage(product.images.cover)}
+                          alt=""
+                          className="Admin-ProductImage"
+                        />
+                        <Box>
+                          <Typography variant="body2" className="Admin-ProductName">
+                            {product.shortName}
+                          </Typography>
+                          <Typography variant="caption" className="Admin-ProductId">
+                            {product.id}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={TYPE_LABELS[product.type]}
+                        size="small"
+                        className={`Admin-TypeChip Admin-TypeChip--${product.type}`}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body2" className="Admin-Price">
+                        {formatCurrency(product.price)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box className="Admin-StockCell">
+                        {product.inStock <= LOW_STOCK && (
+                          <Chip label="Low stock" size="small" className="Admin-LowStock" />
+                        )}
+                        <Typography
+                          variant="body2"
+                          className={`Admin-Stock ${product.inStock <= LOW_STOCK ? 'Admin-Stock--low' : ''}`}
+                        >
+                          {product.inStock}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">{renderActions(product)}</TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" className="Admin-Empty">
+                      No products found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
         <Box className="Admin-Pagination">
           <Typography variant="body2">
