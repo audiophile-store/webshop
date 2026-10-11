@@ -1,0 +1,68 @@
+.Auth {
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px;
+  background: #f1f1f1;
+}
+
+.Auth-Card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.Auth-Card h1 {
+  font-weight: 700;
+  text-align: center;
+}
+
+.Auth-Subtitle {
+  text-align: center;
+}
+
+.Auth-Form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.Auth-Form .MuiInputLabel-root {
+  background: #fff;
+  padding: 0 4px;
+  margin-left: -4px;
+}
+
+.Auth-Form input:-webkit-autofill {
+  border-radius: inherit;
+  -webkit-text-fill-color: #101010;
+  box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 9999s ease-out;
+}
+
+.Auth-Submit.MuiButton-root {
+  background: #d87d4a;
+  color: #fff;
+  padding: 12px;
+  gap: 8px;
+}
+
+.Auth-Submit.MuiButton-root:hover {
+  background: #b96132;
+}
+
+.Auth-Submit.Mui-disabled {
+  background: #e0e0e0;
+  color: #595959;
+}
+
+@media (max-width: 480px) {
+  .Auth-Card {
+    padding: 24px 16px;
+  }
+}

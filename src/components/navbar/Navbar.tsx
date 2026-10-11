@@ -16,6 +16,7 @@ import NavigationItems from './NavigationItems/NavigationItems';
 import Promoted from '../Promoted/Promoted';
 import { openCart } from '../../features/cart/cartSlice';
 import { enqueueSnackbar } from 'notistack';
+import AccountMenu from './AccountMenu';
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<HTMLElement | null>(null);
@@ -88,7 +89,7 @@ function ResponsiveAppBar() {
           <Box className="NavBar-Wrapper">
             <Toolbar style={toolbarStyle()}>
               <Grid container width="100%" justifyContent="space-between" alignItems="center">
-                <Grid xl={1} md={4} item className="Toolbar-Item-1">
+                <Grid item xs="auto" className="Toolbar-Item-1">
                   <Box display="flex" alignItems="center">
                     <MenuNavBar
                       openMenuBar={handleOpenNavMenu}
@@ -98,7 +99,7 @@ function ResponsiveAppBar() {
                     {renderLogo()}
                   </Box>
                 </Grid>
-                <Grid xl={10} md={4} item className="Toolbar-Item-2">
+                <Grid item xs className="Toolbar-Item-2">
                   <NavigationItems calledInFooter={false} />
                 </Grid>
                 <Grid
@@ -107,15 +108,17 @@ function ResponsiveAppBar() {
                       ? { visibility: 'hidden' }
                       : { visibility: 'visible' }
                   }
-                  xl={1}
-                  md={4}
                   item
+                  xs="auto"
                   className="Toolbar-Item-3"
                 >
-                  <Button className={cartAnimate ? 'cart-bounce' : ''} onClick={handleOpenCart}>
-                    {cartLength > 0 && <Box className="Nav-Cart-Quantity">{cartLength}</Box>}
-                    <img src={Cart} alt="Add to Cart" />
-                  </Button>
+                  <Box display="flex" justifyContent="flex-end" alignItems="center">
+                    <AccountMenu />
+                    <Button className={cartAnimate ? 'cart-bounce' : ''} onClick={handleOpenCart}>
+                      {cartLength > 0 && <Box className="Nav-Cart-Quantity">{cartLength}</Box>}
+                      <img src={Cart} alt="Add to Cart" />
+                    </Button>
+                  </Box>
                 </Grid>
               </Grid>
             </Toolbar>

@@ -51,14 +51,32 @@
 }
 
 .Toolbar-Item-2 {
+  min-width: 0;
   padding: 25px 0;
+  position: relative;
+  z-index: 2;
 }
 
 .Toolbar-Item-3 {
+  position: relative;
+  z-index: 1;
   text-align: right;
 }
 
-.Toolbar-Item-3 > button {
+.Nav-SignIn.MuiButton-root {
+  min-width: max-content;
+  margin-right: 8px;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+}
+
+.Nav-SignIn.MuiButton-root:hover {
+  color: #d87d4a;
+}
+
+.Toolbar-Item-3 button {
   position: relative;
 }
 
@@ -144,13 +162,15 @@
 }
 
 .MenuNavBar a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-decoration: none;
   color: #000;
   font-size: 14px;
   font-weight: 500;
   font-family: 'Manrope', sans-serif;
   transition: all 0.2s ease-in-out;
-  display: block;
   width: 100%;
   padding-left: 14px;
 }
@@ -176,3 +196,4 @@
   padding: 15px 0;
   text-align: center;
 }
+

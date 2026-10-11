@@ -16,6 +16,9 @@ import recentlyViewedReducer, {
 } from '../features/recentlyViewed/recentlyViewedSlice';
 import { earphones, headphones, products, speakers } from './products';
 import type { Product } from '../types/product';
+import authReducer from '../features/auth/authSlice';
+
+vi.mock('../features/auth/AuthSession', () => ({ default: () => null }));
 
 const fetchMock = vi.fn<typeof fetch>();
 const apiUrl = 'http://localhost:3000';
@@ -65,6 +68,26 @@ function renderStorefront(path = '/products') {
       orders: ordersReducer,
       snackbar: snackbarReducer,
       recentlyViewed: recentlyViewedReducer,
+      auth: authReducer,
+    },
+    preloadedState: {
+      auth: {
+        status: path === '/admin' ? 'authenticated' : 'anonymous',
+        session:
+          path === '/admin'
+            ? {
+                user: {
+                  id: 'c7428fe9-a8b6-4ec4-ab48-93e8bfa86a0b',
+                  email: 'admin@example.com',
+                  role: 'admin',
+                },
+                expiresAt: new Date(Date.now() + 3600000).toISOString(),
+              }
+            : null,
+        operation: null,
+        error: null,
+        sessionError: null,
+      },
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().prepend(createRecentlyViewedMiddleware()),
@@ -281,7 +304,11 @@ describe('products service integration contract', () => {
 
   it('shows four popular and compact recent skeletons until the home catalogue loads', async () => {
     let resolveCatalogue!: (response: Response) => void;
-    fetchMock.mockReturnValue(new Promise<Response>((resolve) => { resolveCatalogue = resolve; }));
+    fetchMock.mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveCatalogue = resolve;
+      })
+    );
     renderStorefront('/');
 
     const loading = await screen.findByRole('progressbar', { name: 'Loading products' });
@@ -341,19 +368,24 @@ describe('products service integration contract', () => {
 
     await screen.findByRole('heading', { name: popularProducts[0].title });
     const section = await screen.findByRole('region', { name: 'Popular products' });
-    expect(within(section).getAllByRole('heading', { level: 4 }).map((node) => node.textContent))
-      .toEqual(popularProducts.slice(0, 4).map((product) => product.title));
+    expect(
+      within(section)
+        .getAllByRole('heading', { level: 4 })
+        .map((node) => node.textContent)
+    ).toEqual(popularProducts.slice(0, 4).map((product) => product.title));
     expect(within(section).queryByText(popularProducts[4].title)).not.toBeInTheDocument();
     expect(within(section).queryByText(popularProducts[5].title)).not.toBeInTheDocument();
 
     fireEvent.click(within(section).getByRole('link', { name: 'View all' }));
     await screen.findByRole('heading', { name: popularProducts[5].title });
     expect(screen.getByRole('heading', { level: 1, name: 'Popular products' })).toBeVisible();
-    expect(screen.getAllByRole('heading', { level: 4 }).map((node) => node.textContent))
-      .toEqual(popularProducts.map((product) => product.title));
+    expect(screen.getAllByRole('heading', { level: 4 }).map((node) => node.textContent)).toEqual(
+      popularProducts.map((product) => product.title)
+    );
     expect(screen.queryByRole('heading', { name: earphones.title })).not.toBeInTheDocument();
-    expect(fetchMock.mock.calls.filter(([input]) => requestPath(input) === '/products'))
-      .toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(([input]) => requestPath(input) === '/products')
+    ).toHaveLength(1);
   });
 
   it('keeps pagination scoped to popular products and resets when the query changes', async () => {
@@ -369,8 +401,9 @@ describe('products service integration contract', () => {
     expect(screen.getByText('8 products')).toBeVisible();
     expect(screen.getAllByRole('heading', { level: 4 })).toHaveLength(6);
     fireEvent.click(screen.getByRole('button', { name: 'Show More' }));
-    expect(screen.getAllByRole('heading', { level: 4 }).map((node) => node.textContent))
-      .toEqual(popularProducts.map((product) => product.title));
+    expect(screen.getAllByRole('heading', { level: 4 }).map((node) => node.textContent)).toEqual(
+      popularProducts.map((product) => product.title)
+    );
     expect(screen.queryByRole('heading', { name: earphones.title })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show full catalogue' }));
@@ -392,21 +425,30 @@ describe('products service integration contract', () => {
       renderStorefront(path);
       await screen.findByRole('heading', { name: headphones.title });
       expect(screen.getByRole('heading', { level: 1, name: 'All products' })).toBeVisible();
-      expect(screen.getAllByRole('heading', { level: 4 }).map((node) => node.textContent))
-        .toEqual(products.map((product) => product.title));
+      expect(screen.getAllByRole('heading', { level: 4 }).map((node) => node.textContent)).toEqual(
+        products.map((product) => product.title)
+      );
     }
   );
 
   it('shows the popular title during loading and an empty result when none are popular', async () => {
     let resolveCatalogue!: (response: Response) => void;
-    fetchMock.mockReturnValue(new Promise<Response>((resolve) => { resolveCatalogue = resolve; }));
+    fetchMock.mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveCatalogue = resolve;
+      })
+    );
     renderStorefront('/products?popular=true');
 
     await screen.findByRole('progressbar', { name: 'Loading products' });
     expect(screen.getByRole('heading', { level: 1, name: 'Popular products' })).toBeVisible();
-    await act(async () => resolveCatalogue(jsonResponse({
-      products: products.map((product) => ({ ...product, popularProduct: false })),
-    })));
+    await act(async () =>
+      resolveCatalogue(
+        jsonResponse({
+          products: products.map((product) => ({ ...product, popularProduct: false })),
+        })
+      )
+    );
     await screen.findByText('No products found.');
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Popular products' })).toBeVisible();
@@ -450,8 +492,11 @@ describe('products service integration contract', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Go home' }));
     const recentSection = await screen.findByRole('region', { name: 'Recently viewed' });
-    expect(within(recentSection).getAllByRole('heading', { level: 3 }).map((node) => node.textContent))
-      .toEqual([headphones.title, speakers.title]);
+    expect(
+      within(recentSection)
+        .getAllByRole('heading', { level: 3 })
+        .map((node) => node.textContent)
+    ).toEqual([headphones.title, speakers.title]);
     fireEvent.click(within(recentSection).getByRole('button', { name: 'Clear' }));
     expect(store.getState().recentlyViewed.ids).toEqual([]);
     expect(localStorage.getItem(RECENTLY_VIEWED_KEY)).toBeNull();
@@ -459,16 +504,23 @@ describe('products service integration contract', () => {
   });
 
   it('restores recent IDs in view order using current catalogue data and skips deleted products', async () => {
-    localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify([speakers.id, 'deleted', earphones.id]));
+    localStorage.setItem(
+      RECENTLY_VIEWED_KEY,
+      JSON.stringify([speakers.id, 'deleted', earphones.id])
+    );
     mockCatalogue(products.map((product) => ({ ...product, popularProduct: false })));
     renderStorefront('/');
 
     await screen.findByRole('heading', { name: speakers.title });
     const recentSection = await screen.findByRole('region', { name: 'Recently viewed' });
-    expect(within(recentSection).getAllByRole('heading', { level: 3 }).map((node) => node.textContent))
-      .toEqual([speakers.title, earphones.title]);
-    expect(within(recentSection).getByRole('link', { name: new RegExp(speakers.title) }))
-      .toHaveAttribute('href', `/article/${speakers.id}`);
+    expect(
+      within(recentSection)
+        .getAllByRole('heading', { level: 3 })
+        .map((node) => node.textContent)
+    ).toEqual([speakers.title, earphones.title]);
+    expect(
+      within(recentSection).getByRole('link', { name: new RegExp(speakers.title) })
+    ).toHaveAttribute('href', `/article/${speakers.id}`);
     expect(within(recentSection).getAllByText(/123,45/)).toHaveLength(2);
     expect(screen.getByText('No popular products available.')).toBeVisible();
     expect(screen.queryByText('deleted')).not.toBeInTheDocument();
@@ -478,41 +530,57 @@ describe('products service integration contract', () => {
     const store = renderStorefront('/');
     await screen.findByRole('heading', { name: headphones.title });
     const popularSection = await screen.findByRole('region', { name: 'Popular products' });
-    expect(within(popularSection).getByRole('link', { name: 'View all' }))
-      .toHaveAttribute('href', '/products?popular=true');
+    expect(within(popularSection).getByRole('link', { name: 'View all' })).toHaveAttribute(
+      'href',
+      '/products?popular=true'
+    );
     expect(screen.getByRole('region', { name: 'Recently viewed' })).toBeVisible();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    fireEvent.click(within(popularSection).getByRole('button', {
-      name: `Add to cart: ${headphones.title}`,
-    }));
-    fireEvent.click(within(popularSection).getByRole('button', {
-      name: `Add to cart: ${headphones.title}`,
-    }));
+    fireEvent.click(
+      within(popularSection).getByRole('button', {
+        name: `Add to cart: ${headphones.title}`,
+      })
+    );
+    fireEvent.click(
+      within(popularSection).getByRole('button', {
+        name: `Add to cart: ${headphones.title}`,
+      })
+    );
     expect(store.getState().cart.items[0].quantity).toBe(2);
-    expect(within(popularSection).getByRole('button', {
-      name: `All available stock is in your cart: ${headphones.title}`,
-    })).toBeDisabled();
+    expect(
+      within(popularSection).getByRole('button', {
+        name: `All available stock is in your cart: ${headphones.title}`,
+      })
+    ).toBeDisabled();
   });
 
-  it.each([404, 500])('does not record a product whose detail request fails with HTTP %s', async (status) => {
-    fetchMock.mockImplementation(async (input) =>
-      requestPath(input) === '/products'
-        ? jsonResponse({ products })
-        : jsonResponse({ error: 'Product unavailable' }, status)
-    );
-    const store = renderStorefront(`/article/${headphones.id}`);
-    await waitFor(() => expect(store.getState().products.details[headphones.id]?.status)
-      .toBe(status === 404 ? 'not-found' : 'failed'));
-    expect(store.getState().recentlyViewed.ids).toEqual([]);
-    expect(localStorage.getItem(RECENTLY_VIEWED_KEY)).toBeNull();
-  });
+  it.each([404, 500])(
+    'does not record a product whose detail request fails with HTTP %s',
+    async (status) => {
+      fetchMock.mockImplementation(async (input) =>
+        requestPath(input) === '/products'
+          ? jsonResponse({ products })
+          : jsonResponse({ error: 'Product unavailable' }, status)
+      );
+      const store = renderStorefront(`/article/${headphones.id}`);
+      await waitFor(() =>
+        expect(store.getState().products.details[headphones.id]?.status).toBe(
+          status === 404 ? 'not-found' : 'failed'
+        )
+      );
+      expect(store.getState().recentlyViewed.ids).toEqual([]);
+      expect(localStorage.getItem(RECENTLY_VIEWED_KEY)).toBeNull();
+    }
+  );
 
   it('records a view only after the detail request succeeds', async () => {
     let resolveDetail!: (response: Response) => void;
     fetchMock.mockImplementation(async (input) =>
       requestPath(input) === '/products'
         ? jsonResponse({ products })
-        : new Promise<Response>((resolve) => { resolveDetail = resolve; })
+        : new Promise<Response>((resolve) => {
+            resolveDetail = resolve;
+          })
     );
     const store = renderStorefront(`/article/${headphones.id}`);
     await screen.findByRole('progressbar', { name: 'Loading products' });
