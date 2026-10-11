@@ -1,9 +1,13 @@
 import { Box } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import { pages } from '../../../app/constants';
+import { useAppSelector } from '../../../app/hooks';
 import './NavigationItems.css';
 
 export default function NavigationItems({ calledInFooter }: { calledInFooter?: boolean }) {
+  const isLoggedIn = useAppSelector((state) => state.auth.status === 'authenticated');
+  const links = isLoggedIn ? [...pages, { title: 'Admin', url: '/admin' }] : pages;
+
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Box
@@ -17,27 +21,12 @@ export default function NavigationItems({ calledInFooter }: { calledInFooter?: b
           alignItems: 'center',
         }}
       >
-        {pages.length &&
-          pages.map((page) => (
-            <NavLink key={page.title} to={page.url} className="Link">
-              {page.title}
-            </NavLink>
-          ))}
+        {links.map((page) => (
+          <NavLink key={page.title} to={page.url} className="Link">
+            {page.title}
+          </NavLink>
+        ))}
       </Box>
-      {/* <Box display='flex' gap={2}>
-        <NavLink
-          activeClassName='active'
-          to={ '/login' }
-          className='Link'>
-          Login
-        </NavLink>
-        <NavLink
-          activeClassName='active'
-          to={ '/login' }
-          className='Link'>
-          Signup
-        </NavLink>
-      </Box> */}
     </Box>
   );
 }

@@ -4,6 +4,7 @@ import './App.css';
 import Layout from './components/Layout/Layout';
 import { useAppDispatch } from './app/hooks';
 import { fetchProducts } from './features/product/productSlice';
+import AuthSession from './features/auth/AuthSession';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -13,6 +14,7 @@ function App() {
 
   return (
     <Box className="App">
+      <AuthSession />
       <Layout />
     </Box>
   );

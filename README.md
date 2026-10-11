@@ -43,6 +43,47 @@ A demo e-commerce storefront for audio equipment, built with React, TypeScript a
 - API-backed cash checkout with form validation, VAT breakdown, shipping, and server-confirmed orders
 - Client-side routing with breadcrumbs and scroll restoration
 - Responsive layout for mobile, tablet, and desktop
+- Cookie-backed administrator sign-in, session restoration, logout and protected admin route
+
+### Authentication
+
+`/sign-in` uses the existing [auth-service](https://github.com/audiophile-store/auth-service):
+`POST /login` sends only `{ email, password }`, `GET /me` restores the session on
+startup and window focus, and `POST /logout` requires HTTP 204 before clearing
+the local session. Requests include cookies and disable caching. Sessions expire
+after one hour; the UI also removes expired sessions. Credentials and session
+tokens are never stored in localStorage. No "Remember me", password reset or
+profile endpoint is available.
+
+The backend currently accepts **administrators only**. There is no public
+registration endpoint, so the frontend provides no account-creation form.
+Accounts must be provisioned using the auth-service administrator tooling.
+The frontend route guard is a UX control, not API authorization; write endpoints
+must enforce authorization on the backend.
+
+Locally, run auth-service on port 3002 with `NODE_ENV=development` and
+`AUTH_ALLOWED_ORIGINS=http://localhost:5173`. Vite proxies `/api/auth/*` to
+`AUTH_PROXY_TARGET` (default `http://localhost:3002`), stripping `/api/auth`
+while preserving the browser's Origin header and the service's Set-Cookie.
+Restart Vite after changing the target. No backend CORS changes are required
+for this same-origin setup. The existing products and orders configuration is
+unchanged.
+
+Verify that the running auth service includes the authentication routes:
+`GET http://localhost:3002/me` without a cookie should return HTTP 401 with
+`code: "INVALID_SESSION"`. HTTP 404 means the endpoint is not available at
+that target; check the target and update/rebuild the auth-service application
+or container from its current `main`. A successful `/health` response alone
+does not verify that login/session routes are installed.
+
+For production, configure a **same-origin reverse proxy** for `/api/auth/login`,
+`/api/auth/me` and `/api/auth/logout` to the corresponding service paths.
+Preserve Origin, Cookie and Set-Cookie, disable caching, and use HTTPS with the
+auth service in production mode and the exact approved frontend origin in
+`AUTH_ALLOWED_ORIGINS`. The Vite development proxy is **not** included in the
+production bundle or `vite preview`. Without a production proxy, authentication
+will report an error; simply pointing at a cross-origin service is not supported
+by the current backend's CORS and SameSite cookie contract.
 
 ## Tech stack
 

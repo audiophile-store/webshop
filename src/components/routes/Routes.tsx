@@ -9,6 +9,8 @@ import OrderSuccess from '../../pages/OrderSuccess/OrderSuccess';
 import Admin from '../../pages/Admin/Admin';
 import CatalogueBoundary from '../CatalogueBoundary/CatalogueBoundary';
 import type { ReactNode } from 'react';
+import ProtectedRoute from './ProtectedRoute';
+import SignIn from '../../pages/Auth/SignIn';
 
 const PageRoutes = () => {
   const products = useAppSelector((state) => state.products.data);
@@ -44,7 +46,8 @@ const PageRoutes = () => {
       <Route path="/article/:id" element={<Article />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/order-success" element={<OrderSuccess />} />
-      <Route path="/admin" element={catalogue(<Admin />)} />
+      <Route path="/admin" element={<ProtectedRoute>{catalogue(<Admin />)}</ProtectedRoute>} />
+      <Route path="/sign-in" element={<SignIn />} />
     </Routes>
   );
 };

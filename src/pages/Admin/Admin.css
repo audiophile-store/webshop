@@ -1,57 +1,118 @@
 .Admin {
-  padding: 30px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+  flex: 1;
+  padding: 24px 16px 40px;
+  background: #fafafa;
 }
 
-.Admin-Header {
-  margin-bottom: 24px;
+.Admin-Breadcrumb {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: #888;
+  font-size: 13px;
+}
+
+.Admin-Breadcrumb [aria-current='page'] {
+  color: #101010;
+}
+
+.Admin-Heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.Admin-TitleGroup {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
 }
 
 .Admin-Title {
   font-weight: 700 !important;
-  letter-spacing: 1px;
+  letter-spacing: 0;
 }
 
-.Admin-Subtitle {
+.Admin-Count {
   color: #888;
-  margin-top: 4px !important;
+}
+
+.Admin-AddButton.MuiButton-root {
+  flex-shrink: 0;
+  background-color: #d87d4a;
+  color: #fff;
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.Admin-AddButton.MuiButton-root:hover {
+  background-color: #fbaf85;
+}
+
+.Admin-Panel {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
 }
 
 .Admin-Toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  flex-wrap: wrap;
 }
 
 .Admin-Search {
-  flex: 1;
-  max-width: 400px;
+  flex: 1 1 240px;
+  max-width: 320px;
 }
 
 .Admin-Search .MuiOutlinedInput-root {
   border-radius: 8px;
   font-size: 14px;
+  background: #fff;
 }
 
-.Admin-AddButton {
-  background-color: #d87d4a !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-  width: 40px;
-  height: 40px;
-  transition: background-color 0.2s ease !important;
+.Admin-Filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.Admin-AddButton:hover {
-  background-color: #fbaf85 !important;
+.Admin-Filter.MuiChip-root {
+  height: 32px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: #101010;
+  font-weight: 600;
+}
+
+.Admin-Filter--active.MuiChip-root {
+  border-color: #d87d4a;
+  color: #d87d4a;
+  background: rgba(216, 125, 74, 0.08);
 }
 
 .Admin-TableContainer {
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  border-top: 1px solid #e8e8e8;
+  border-radius: 0;
+}
+
+.Admin-TableContainer table {
+  min-width: 720px;
 }
 
 .Admin-TableHead .MuiTableCell-root {
@@ -65,13 +126,16 @@
   padding: 14px 16px;
 }
 
+.Admin-TableHead .MuiTableSortLabel-root {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
 .Admin-TableRow .MuiTableCell-root {
   padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
-}
-
-.Admin-TableRow:last-child .MuiTableCell-root {
-  border-bottom: none;
 }
 
 .Admin-TableRow:hover {
@@ -93,9 +157,10 @@
 }
 
 .Admin-ProductName {
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   font-size: 14px !important;
   line-height: 1.3 !important;
+  text-transform: uppercase;
 }
 
 .Admin-ProductId {
@@ -125,19 +190,28 @@
   color: #2e8b2e !important;
 }
 
-.Admin-Price {
+.Admin-Price,
+.Admin-Stock {
   font-weight: 600 !important;
   font-size: 14px !important;
 }
 
-.Admin-Stock {
-  font-weight: 500 !important;
-  font-size: 14px !important;
+.Admin-StockCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.Admin-LowStock.MuiChip-root {
+  height: 22px;
+  background: #fef3e2;
+  color: #d87d4a;
+  font-weight: 700;
 }
 
 .Admin-Stock--low {
-  color: #d32f2f !important;
-  font-weight: 600 !important;
+  color: #d87d4a !important;
 }
 
 .Admin-Actions {
@@ -149,9 +223,6 @@
 
 .Admin-EditBtn {
   color: #555 !important;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease !important;
 }
 
 .Admin-EditBtn:hover {
@@ -160,49 +231,25 @@
 }
 
 .Admin-DeleteBtn {
-  color: #999 !important;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease !important;
+  color: #d32f2f !important;
 }
 
 .Admin-DeleteBtn:hover {
-  color: #d32f2f !important;
   background-color: rgba(211, 47, 47, 0.08) !important;
 }
 
 .Admin-Empty {
   padding: 40px 16px !important;
   color: #999 !important;
-  font-size: 14px !important;
 }
 
-@media screen and (min-width: 600px) {
-  .Admin {
-    padding: 30px 60px;
-  }
-}
-
-@media screen and (min-width: 900px) {
-  .Admin {
-    padding: 40px 80px;
-  }
-}
-
-@media screen and (max-width: 600px) {
-  .Admin-TableHead .MuiTableCell-root:nth-of-type(2),
-  .Admin-TableRow .MuiTableCell-root:nth-of-type(2) {
-    display: none;
-  }
-
-  .Admin-ProductImage {
-    width: 40px;
-    height: 40px;
-  }
-
-  .Admin-ProductName {
-    font-size: 13px !important;
-  }
+.Admin-Pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 16px;
+  color: #666;
 }
 
 .Admin-DeleteDialog {
@@ -218,21 +265,34 @@
   padding: 8px 24px 16px !important;
 }
 
-.Admin-DeleteDialog-CancelBtn {
-  color: #666 !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
+@media screen and (max-width: 700px) {
+  .Admin-Heading,
+  .Admin-Toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .Admin-Search {
+    max-width: none;
+  }
+
+  .Admin-AddButton.MuiButton-root,
+  .Admin-Pagination {
+    width: 100%;
+  }
+
+  .Admin-Pagination {
+    justify-content: space-between;
+  }
+
+  .Admin-ProductImage {
+    width: 40px;
+    height: 40px;
+  }
 }
 
-.Admin-DeleteDialog-ConfirmBtn {
-  background-color: #d32f2f !important;
-  color: #fff !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
-  padding: 6px 24px !important;
-}
-
-.Admin-DeleteDialog-ConfirmBtn:hover {
-  background-color: #b71c1c !important;
+@media screen and (min-width: 900px) {
+  .Admin {
+    padding: 32px 80px 48px;
+  }
 }

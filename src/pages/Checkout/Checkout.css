@@ -32,25 +32,25 @@
 }
 
 /* Input polja (TextFields) */
-.MuiTextField-root {
+.Checkout-Container .MuiTextField-root {
   background-color: transparent;
 }
 
-.MuiOutlinedInput-root {
+.Checkout-Container .MuiOutlinedInput-root {
   background-color: #f1f1f1;
   border-radius: 8px;
 }
 
-.MuiOutlinedInput-notchedOutline {
+.Checkout-Container .MuiOutlinedInput-notchedOutline {
   border-radius: 8px;
 }
 
-.MuiInputBase-input {
+.Checkout-Container .MuiInputBase-input {
   padding: 12px 14px;
   font-size: 14px;
 }
 
-.MuiFormHelperText-root {
+.Checkout-Container .MuiFormHelperText-root {
   margin-left: 4px;
   min-height: 18px;
   line-height: 18px;
@@ -79,7 +79,7 @@
 }
 
 /* Kada je Radio selektovan */
-.Mui-checked + .MuiTypography-root {
+.Checkout-Container .Mui-checked + .MuiTypography-root {
   font-weight: bold;
   color: #d87d4a;
 }
