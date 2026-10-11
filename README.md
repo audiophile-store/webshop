@@ -31,9 +31,6 @@ The UI is hosted on Vercel.
 
 ## Screenshots
 
-<details>
-<summary>View home, catalogue, product, cart and checkout screens</summary>
-
 ### Home
 
 ![Home page](docs/screenshots/home.png)
@@ -53,8 +50,6 @@ The UI is hosted on Vercel.
 ### Checkout
 
 ![Checkout page](docs/screenshots/checkout.png)
-
-</details>
 
 ## Run locally
 
