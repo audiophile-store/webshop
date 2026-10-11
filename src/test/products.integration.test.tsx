@@ -108,6 +108,26 @@ function renderStorefront(path = '/products') {
   return store;
 }
 
+describe('sticky navigation layout', () => {
+  it('keeps the home hero outside the header and removes it on catalogue navigation', async () => {
+    mockCatalogue();
+    renderStorefront('/');
+    const header = screen
+      .getAllByRole('banner')
+      .find((element) => element.classList.contains('Layout-Header'));
+    if (!header) throw new Error('Sticky layout header is missing.');
+    expect(within(header).getByRole('link', { name: 'Home' })).toBeInTheDocument();
+    expect(within(header).queryByRole('link', { name: 'BROWSE PRODUCTS' })).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole('main')).getByRole('link', { name: 'BROWSE PRODUCTS' })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show full catalogue' }));
+    expect(screen.queryByRole('link', { name: 'BROWSE PRODUCTS' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('banner')).toContain(header);
+    await screen.findByText(headphones.shortName);
+  });
+});
+
 beforeEach(() => {
   localStorage.clear();
   fetchMock.mockReset();
