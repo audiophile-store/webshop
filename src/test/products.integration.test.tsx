@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { Provider } from 'react-redux';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import productReducer from '../features/product/productSlice';
 import cartReducer from '../features/cart/cartSlice';
@@ -134,6 +134,98 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
   vi.stubEnv('VITE_PRODUCTS_API_URL', apiUrl);
   mockCatalogue();
+});
+
+describe('admin responsive products', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  function mobileViewport() {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query === '(max-width: 700px)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }))
+    );
+  }
+
+  it('keeps the desktop table and its sortable columns', async () => {
+    renderStorefront('/admin');
+    await screen.findByText(headphones.shortName);
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Products' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Price' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stock' })).toBeInTheDocument();
+  });
+
+  it('shows mobile cards with identity, type, price, stock and existing edit/delete dialogs', async () => {
+    mobileViewport();
+    renderStorefront('/admin');
+    const list = await screen.findByRole('list', { name: 'Products' });
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    const card = within(list).getByRole('heading', { name: headphones.shortName }).closest('li');
+    if (!card) throw new Error('Product card is missing.');
+    expect(within(card).getByText(headphones.id)).toBeInTheDocument();
+    expect(within(card).getByText('Headphones')).toBeInTheDocument();
+    expect(within(card).getByText(/123,45\s*\u20ac/)).toBeInTheDocument();
+    expect(within(card).getByText('2')).toBeInTheDocument();
+    expect(within(card).getByText('Low stock')).toBeInTheDocument();
+    fireEvent.click(within(card).getByRole('button', { name: `Edit ${headphones.shortName}` }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    fireEvent.click(within(card).getByRole('button', { name: `Delete ${headphones.shortName}` }));
+    expect(await screen.findByRole('dialog')).toHaveTextContent(headphones.shortName);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3);
+    expect(fetchMock.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true);
+  });
+
+  it('preserves mobile sorting, pagination, category and search filters and empty results', async () => {
+    mobileViewport();
+    mockCatalogue(
+      Array.from({ length: 9 }, (_, index) => ({
+        ...headphones,
+        id: `mobile-${index}`,
+        title: `Mobile product ${index}`,
+        shortName: `Mobile product ${index}`,
+        type: index === 8 ? 'speakers' : 'headphones',
+        price: index + 1,
+        inStock: 20 - index,
+      }))
+    );
+    renderStorefront('/admin');
+    const list = await screen.findByRole('list', { name: 'Products' });
+    await screen.findByText('Mobile product 0');
+    expect(within(list).getAllByRole('listitem')).toHaveLength(7);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    expect(screen.getByText('Mobile product 8')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by price' }));
+    expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 0');
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by price, ascending' }));
+    expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 8');
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by stock' }));
+    expect(within(list).getAllByRole('heading')[0]).toHaveTextContent('Mobile product 8');
+    fireEvent.click(
+      within(screen.getByRole('group', { name: 'Filter by type' })).getByRole('button', {
+        name: 'Speakers',
+      })
+    );
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search by name or SKU' }), {
+      target: { value: 'missing product' },
+    });
+    expect(screen.getByText('No products found')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+  });
 });
 
 describe('products service integration contract', () => {
