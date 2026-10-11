@@ -58,7 +58,13 @@ const OrderSuccess = () => {
       <Box sx={{ textAlign: 'center', py: 6 }}>
         <CheckCircleIcon sx={{ fontSize: 100, color: '#4caf50', mb: 3 }} />
 
-        <Typography variant="h3" gutterBottom fontWeight="bold">
+        <Typography
+          component="h1"
+          className="OrderSuccess-Title"
+          variant="h3"
+          gutterBottom
+          fontWeight="bold"
+        >
           Thank You for Your Order!
         </Typography>
 
