@@ -43,6 +43,7 @@ A demo e-commerce storefront for audio equipment, built with React, TypeScript a
 - API-backed cash checkout with form validation, VAT breakdown, shipping, and server-confirmed orders
 - Client-side routing with breadcrumbs and scroll restoration
 - Responsive layout for mobile, tablet, and desktop
+- Sticky navigation stays visible while scrolling; the home hero scrolls with the page, and cart/dialog overlays appear above navigation
 - Cookie-backed administrator sign-in, session restoration, logout and protected admin route
 
 ### Authentication

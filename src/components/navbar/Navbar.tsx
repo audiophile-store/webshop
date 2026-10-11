@@ -13,7 +13,6 @@ import { Grid } from '@mui/material';
 import './Navbar.css';
 import MenuNavBar from './MenuNavBar/MenuNavBar';
 import NavigationItems from './NavigationItems/NavigationItems';
-import Promoted from '../Promoted/Promoted';
 import { openCart } from '../../features/cart/cartSlice';
 import { enqueueSnackbar } from 'notistack';
 import AccountMenu from './AccountMenu';
@@ -68,13 +67,6 @@ function ResponsiveAppBar() {
     );
   };
 
-  const renderPromotedProduct = () => {
-    if (location.pathname === '/') {
-      return <Promoted />;
-    }
-    return null;
-  };
-
   const toolbarStyle = () => {
     if (borderPathNames.includes(location.pathname)) {
       return { borderBottom: '1px solid rgba(255, 255, 255, 0.2)', padding: '0' };
@@ -125,10 +117,6 @@ function ResponsiveAppBar() {
           </Box>
         </AppBar>
       </Grid>
-      <Grid item xl={12} lg={12} md={12} sm={12} className="Nav-Item-Middle">
-        {renderPromotedProduct()}
-      </Grid>
-      {/* <Grid item xl={ 12 } lg={ 12 } md={ 12 } sm={ 12 } className='Nav-Item-Bottom'>{ renderProductTitle() }</Grid> */}
     </Grid>
   );
 }
