@@ -61,13 +61,10 @@ Accounts must be provisioned using the auth-service administrator tooling.
 The frontend route guard is a UX control, not API authorization; write endpoints
 must enforce authorization on the backend.
 
-Locally, run auth-service on port 3002 with `NODE_ENV=development` and
-`AUTH_ALLOWED_ORIGINS=http://localhost:5173`. Vite proxies `/api/auth/*` to
-`AUTH_PROXY_TARGET` (default `http://localhost:3002`), stripping `/api/auth`
-while preserving the browser's Origin header and the service's Set-Cookie.
-Restart Vite after changing the target. No backend CORS changes are required
-for this same-origin setup. The existing products and orders configuration is
-unchanged.
+The browser calls the auth service directly using `VITE_AUTH_API_URL`, just as
+products and orders use their respective API URL variables. Locally, set
+`VITE_AUTH_API_URL=http://localhost:3002` in `.env.local` and restart Vite.
+There is no auth proxy or fallback URL.
 
 Verify that the running auth service includes the authentication routes:
 `GET http://localhost:3002/me` without a cookie should return HTTP 401 with
@@ -76,14 +73,17 @@ that target; check the target and update/rebuild the auth-service application
 or container from its current `main`. A successful `/health` response alone
 does not verify that login/session routes are installed.
 
-For production, configure a **same-origin reverse proxy** for `/api/auth/login`,
-`/api/auth/me` and `/api/auth/logout` to the corresponding service paths.
-Preserve Origin, Cookie and Set-Cookie, disable caching, and use HTTPS with the
-auth service in production mode and the exact approved frontend origin in
-`AUTH_ALLOWED_ORIGINS`. The Vite development proxy is **not** included in the
-production bundle or `vite preview`. Without a production proxy, authentication
-will report an error; simply pointing at a cross-origin service is not supported
-by the current backend's CORS and SameSite cookie contract.
+On the webshop Vercel project, set `VITE_AUTH_API_URL` to the public HTTPS base
+URL of the remote auth service (without `/login`, `/me` or `/logout`), select
+Production and any required Preview environments, and redeploy. Vite embeds
+this value at build time. No auth rewrite in `vercel.json` is required.
+
+Direct cross-origin requests require the service to allow the exact frontend
+origin through credentialed CORS, including the JSON login preflight. Cross-site
+session cookies require `SameSite=None; Secure` and can still be blocked by browser
+third-party cookie policies. This repository does not configure those backend
+requirements; the existing service's lack of CORS support must be resolved
+separately before cross-origin login can work end to end.
 
 ## Tech stack
 

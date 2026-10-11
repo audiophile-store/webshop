@@ -53,6 +53,7 @@ function fillLogin() {
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
+  vi.stubEnv('VITE_AUTH_API_URL', 'https://auth.example.test');
 });
 
 afterEach(() => vi.useRealTimers());
@@ -173,7 +174,10 @@ describe('authentication UI', () => {
     const store = renderAuth();
     await waitFor(() => expect(store.getState().auth.status).toBe('anonymous'));
     expect(screen.queryByRole('link', { name: /sign up|create account/i })).not.toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/api/auth/me', expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
+      'https://auth.example.test/me',
+      expect.any(Object)
+    );
     fireEvent.click(screen.getByRole('link', { name: 'Sign In' }));
     expect(screen.getByRole('heading', { name: 'Sign In' })).toBeVisible();
   });
@@ -195,7 +199,7 @@ describe('authentication UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
     await screen.findByRole('alert');
     expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/auth/login',
+      'https://auth.example.test/login',
       expect.objectContaining({
         body: JSON.stringify({ email: 'test@test.com', password: 'Password123!' }),
       })

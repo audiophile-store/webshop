@@ -54,13 +54,36 @@ export function isAuthSession(value: unknown): value is AuthSession {
   );
 }
 
+function getBaseUrl(): string {
+  const value = import.meta.env.VITE_AUTH_API_URL?.trim();
+  if (!value) throw new AuthApiError('VITE_AUTH_API_URL is not configured.');
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new AuthApiError('VITE_AUTH_API_URL must be a valid HTTP or HTTPS URL.');
+  }
+  if (
+    !['http:', 'https:'].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash
+  ) {
+    throw new AuthApiError('VITE_AUTH_API_URL must be a valid HTTP or HTTPS base URL.');
+  }
+  return url.href.replace(/\/+$/, '');
+}
+
 async function request(
   path: string,
   method: 'GET' | 'POST',
   body?: LoginRequest
 ): Promise<Response> {
+  const url = `${getBaseUrl()}${path}`;
   try {
-    return await fetch(`/api/auth${path}`, {
+    return await fetch(url, {
       method,
       credentials: 'include',
       cache: 'no-store',
@@ -70,7 +93,7 @@ async function request(
     });
   } catch {
     throw new AuthApiError(
-      'Unable to reach the auth service. Check your connection and auth proxy.'
+      'Unable to reach the auth service. Check your connection and auth service configuration.'
     );
   }
 }

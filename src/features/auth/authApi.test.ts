@@ -10,16 +10,17 @@ const session = () => ({
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
+  vi.stubEnv('VITE_AUTH_API_URL', 'https://auth.example.test/');
 });
 
 describe('auth API contract', () => {
-  it('sends normalized email and unchanged password, with same-origin cookies and no cache', async () => {
+  it('sends normalized email and unchanged password to the configured service, with cookies and no cache', async () => {
     const response = session();
     fetchMock.mockResolvedValue(new Response(JSON.stringify(response)));
     await expect(
       login({ email: ' ADMIN@Example.com ', password: ' Space Password! ' })
     ).resolves.toEqual(response);
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/api/auth/login', {
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('https://auth.example.test/login', {
       method: 'POST',
       credentials: 'include',
       cache: 'no-store',
@@ -31,7 +32,7 @@ describe('auth API contract', () => {
   it('treats only /me HTTP 401 as an anonymous session', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
     await expect(getSession()).resolves.toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/me', {
+    expect(fetchMock).toHaveBeenCalledWith('https://auth.example.test/me', {
       method: 'GET',
       credentials: 'include',
       cache: 'no-store',
@@ -73,12 +74,41 @@ describe('auth API contract', () => {
   it('accepts only HTTP 204 for logout and never sends credentials in the body', async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
     await expect(logout()).resolves.toBeUndefined();
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', {
+    expect(fetchMock).toHaveBeenCalledWith('https://auth.example.test/logout', {
       method: 'POST',
       credentials: 'include',
       cache: 'no-store',
     });
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 200 }));
     await expect(logout()).rejects.toThrow('Unexpected auth response');
+  });
+
+  it.each([
+    '',
+    'not-a-url',
+    'ftp://auth.example.test',
+    'https://user:pass@auth.example.test',
+    'https://auth.example.test?key=value',
+    'https://auth.example.test#hash',
+  ])('rejects invalid configuration %s before fetching', async (url) => {
+    vi.stubEnv('VITE_AUTH_API_URL', url);
+    await expect(getSession()).rejects.toThrow('VITE_AUTH_API_URL');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('reports a missing configuration without fetching', async () => {
+    vi.stubEnv('VITE_AUTH_API_URL', undefined);
+    await expect(getSession()).rejects.toThrow('VITE_AUTH_API_URL is not configured');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('preserves a configured base path and trims whitespace and trailing slashes', async () => {
+    vi.stubEnv('VITE_AUTH_API_URL', ' https://auth.example.test/api/// ');
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+    await logout();
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://auth.example.test/api/logout',
+      expect.any(Object)
+    );
   });
 });
